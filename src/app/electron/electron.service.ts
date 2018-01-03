@@ -5,7 +5,6 @@ import * as childProcess from 'child_process';
 
 import { MenuService } from "./components/menu.service";
 
-
 @Injectable() 
 export class ElectronService {
 

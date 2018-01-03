@@ -10,6 +10,11 @@ import { CameraComponent } from './camera.component';
   imports: [
     BrowserModule
   ],
-  providers: []
+  exports: [
+    CameraComponent
+  ],
+  providers: [
+
+  ]
 })
 export class CameraModule { }

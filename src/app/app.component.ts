@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ElectronService } from './electron/electron.service';
+import { MainService } from './main.service';
 
 @Component({
   selector: 'app-root',
@@ -8,8 +9,8 @@ import { ElectronService } from './electron/electron.service';
 })
 export class AppComponent{
 
-  constructor(private electronService: ElectronService) {
-    this.electronService.buildMenu();
-  }
+	constructor(private electronService: ElectronService) {
+		this.electronService.buildMenu();
+	}
 
 }

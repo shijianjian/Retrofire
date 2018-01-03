@@ -2,14 +2,15 @@ import { Injectable } from "@angular/core";
 import { OpenDialogOptions } from "electron";
 
 import * as electron from 'electron';
+import { FileHelperService } from "../helpers/file-helper.service";
 declare const app: typeof electron;
 
 @Injectable()
 export class MenuService {
 
+    constructor(private fileHelperService: FileHelperService){}
+
     build() {
-        console.log(app)
-        console.log(app.Menu)
         app.Menu.setApplicationMenu(this.menu());
     }
 
@@ -27,10 +28,13 @@ export class MenuService {
 
     private openFileDialog() {
         let options: OpenDialogOptions = {
-            title: 'Import a file'
+            title: 'Import a file',
+            filters: this.fileHelperService.fileFilters
         };
         app.dialog.showOpenDialog(options, (cb)=> {
             console.log(cb);
+            this.fileHelperService.readFile(cb[0]);
         });
     }
+
 }

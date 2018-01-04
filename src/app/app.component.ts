@@ -5,7 +5,13 @@ import { MainService } from './main.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styles:[`
+  :host {
+	  display: block;
+	  width: 100%;
+	  height: 100%;
+  }
+  `]
 })
 export class AppComponent{
 

@@ -40,11 +40,12 @@ export class PTSLoader {
             lastLine = textChunk.substring(idx);
             textChunk.substring(0, idx);
             let lines = textChunk.split("\n");
-
+            console.log(textChunk)
+            console.log(lines)
             lines.forEach((line) => {
                 arr = Array.from(line.split(' '));
                 arr.forEach((ele, idx, arrcb) => {
-                    arrcb[idx] = parseInt(ele);
+                    arrcb[idx] = parseFloat(ele);
                 })
                 if(validatePoint(arr)) {
                     res.push(arr);

@@ -1,12 +1,14 @@
-import { Component, ViewChild, ElementRef, HostListener, Input, OnInit } from '@angular/core';
-
+import { Component, ViewChild, ElementRef, HostListener, Input, OnInit, OnDestroy } from '@angular/core';
+import { PointsMaterial } from 'three';
 import * as _THREE from 'three';
 declare const THREE: typeof _THREE;
 import "three/examples/js/controls/OrbitControls";
 
 import { MainService } from '../main.service';
 import { CameraParams, PointCloudLoader } from './PointCloud';
-import { CameraGuiService } from './camera-gui.service';
+import { CameraGuiService, PointControls, SceneControls, SceneGuiControls } from './camera-gui.service';
+import { PointerMode } from '../model/pointer.mode';
+
 
 @Component({
 	selector: 'pl-camera',
@@ -21,7 +23,7 @@ import { CameraGuiService } from './camera-gui.service';
 		}
 	`]
 })
-export class CameraComponent implements OnInit {
+export class CameraComponent implements OnInit, OnDestroy {
 
 	@Input() data: number[][];
 
@@ -34,6 +36,8 @@ export class CameraComponent implements OnInit {
 	@ViewChild('canvas', { read: ElementRef })
 	private canvasRef: ElementRef;
 
+	private axisHelper: THREE.AxisHelper;
+	
 	constructor(
 		private mainService: MainService,
 		private cameraGuiService: CameraGuiService
@@ -44,13 +48,56 @@ export class CameraComponent implements OnInit {
 				this.update();
 			}
 		});
+		this.mainService.getPointerMode().subscribe(mode => {
+			if (typeof this.controls == 'undefined') {
+				return;
+			}
+			if (mode == PointerMode.POINT) {
+				this.controls.enabled = true;
+			}
+			if (mode == PointerMode.CROP) {
+				this.controls.enabled = false;
+			}
+		});
+		this.cameraGuiService.pointControls.subscribe(ctrls => {
+			if (this.figure) {
+				ctrls.control === PointControls.SIZE ? 
+					(<PointsMaterial>this.figure.material).size = ctrls.parameters.size : null;
+				ctrls.control === PointControls.OPACITY ? 
+					(<PointsMaterial>this.figure.material).opacity = ctrls.parameters.opacity : null;
+				ctrls.control === PointControls.COLOUR ? 
+					(<PointsMaterial>this.figure.material).color = new THREE.Color(ctrls.parameters.colour) : null;
+				
+				this.render();
+			}	
+		});
+		this.cameraGuiService.sceneControls.subscribe(ctrls => {
+			if(this.scene) {
+				ctrls.control === SceneControls.COLOUR ?
+					this.scene.background = new THREE.Color(ctrls.parameters.colour) : null;
+
+				// axes
+				if (ctrls.control === SceneControls.AXES) {
+					if (typeof this.axisHelper == 'undefined') {
+						this.axisHelper = new THREE.AxisHelper();
+					}
+					if (ctrls.parameters.axes) {
+						this.scene.add(this.axisHelper);
+					} else {
+						this.scene.remove(this.axisHelper);
+					}
+				}
+				
+				this.render();
+			}
+		});
 	}
 
+
 	ngOnInit() {
-		this.createScene();
+		this.createScene(this.cameraGuiService.sceneControls.getValue().parameters);
 		this.createLight();
 		this.initRenderer();
-		this.cameraGuiService.buildGui();
 	}
 
 	/* LIFECYCLE */
@@ -58,25 +105,38 @@ export class CameraComponent implements OnInit {
 		if(this.data && this.data.length > 0) {
 			let cameraParams = PointCloudLoader.calculate(this.data);
 			this.createCamera(this.data, cameraParams);
+			if (this.figure) {
+				this.scene.remove(this.figure);
+			}
 			this.loadPoints(this.data);
+			if (this.controls) {
+				this.controls.removeEventListener('change', this.onControlChangeEvent);
+			}
 			this.addControls(cameraParams);
-			this.render(this.scene, this.camera);
+			this.render();
+			this.cameraGuiService.buildGuiIfNotExits();
 		}
+	}
+
+	ngOnDestroy() {
+		this.removeAll();
 	}
 
 	public loadPoints(data: number[][]): void {
 		let geometry = PointCloudLoader.getPointsGeometry(data);
 		let figure = PointCloudLoader.loadPoints(geometry, {
-			size: 0.005,
+			size: this.cameraGuiService.pointControls.getValue().parameters.size,
+			transparent: true, // for controlling opacity
 			vertexColors: THREE.VertexColors
 		});
 		this.figure = figure;
 		this.scene.add(figure);
     }
 
-	private createScene() {
-        this.scene = new THREE.Scene();
-        this.scene.add(new THREE.AxisHelper(200));
+	private createScene(parameters: SceneGuiControls) {
+		this.scene = new THREE.Scene();
+		this.scene.background = parameters.colour;
+        parameters.axes ? this.scene.add(new THREE.AxisHelper()) : null;
 	}
 	
 	private createLight() {
@@ -104,25 +164,22 @@ export class CameraComponent implements OnInit {
             cameraParams.look_y, 
 			cameraParams.look_z)
 		);
-        this.controls.addEventListener('change', (event) => this.render(this.scene, this.camera));
+        this.controls.addEventListener('change', (event) => this.render());
 	}
 	
 	private get canvas(): HTMLCanvasElement {
 		return this.canvasRef.nativeElement;
 	}
 
-	private animate(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
+	private animate() {
         requestAnimationFrame(() => this.animate);
 
-        let light = new THREE.AmbientLight(0xFFFFFF, 1); // soft white light
-        scene.add(light);
-
-        this.render(scene, camera);
+        this.render();
         this.controls.update();
     }
 
-    private render(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
-        this.renderer.render(scene, camera);
+    private render() {
+        this.renderer.render(this.scene, this.camera);
 	}
 
 	private removeAll() {
@@ -133,7 +190,7 @@ export class CameraComponent implements OnInit {
 	}
 	
 	private onControlChangeEvent = (event) => {
-        this.render(this.scene, this.camera);
+        this.render();
     };
 
 	/* EVENTS */
@@ -148,7 +205,7 @@ export class CameraComponent implements OnInit {
 			this.camera.aspect = this.canvas.clientWidth/this.canvas.clientHeight;
 			this.camera.updateProjectionMatrix();
 			this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
-			this.render(this.scene, this.camera);
+			this.render();
 		} else {
 			console.log('Camera has been defined.');
 		}

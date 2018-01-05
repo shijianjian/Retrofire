@@ -1,0 +1,16 @@
+<mat-toolbar color="primary">
+    <mat-toolbar-row>
+        <mat-icon (click)="onCrop()">crop</mat-icon>
+        <mat-icon 
+            [style.visibility]="showSecondToolbar ? 'hidden' : 'visible'"
+            (click)="showSecondToolbar = true">expand_more</mat-icon>
+    </mat-toolbar-row>
+  
+    <mat-toolbar-row *ngIf="showSecondToolbar">
+        <mat-icon>favorite</mat-icon>
+        <mat-icon>delete</mat-icon>
+        <mat-icon 
+            [style.visibility]="showSecondToolbar ? 'visible' : 'hidden'"
+            (click)="showSecondToolbar = false">expand_less</mat-icon>
+    </mat-toolbar-row>
+</mat-toolbar>

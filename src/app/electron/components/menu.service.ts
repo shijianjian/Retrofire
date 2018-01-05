@@ -1,9 +1,9 @@
 import { Injectable } from "@angular/core";
 import { OpenDialogOptions } from "electron";
 
-import * as electron from 'electron';
+import * as Electron from 'electron';
 import { FileHelperService } from "../helpers/file-helper.service";
-declare const app: typeof electron;
+declare const app: typeof Electron;
 
 @Injectable()
 export class MenuService {
@@ -19,6 +19,7 @@ export class MenuService {
             label: 'File',
             submenu: [{
                 label: 'Open',
+                accelerator:'CmdOrCtrl+O',
                 click: () => {
                     this.openFileDialog();
                 }

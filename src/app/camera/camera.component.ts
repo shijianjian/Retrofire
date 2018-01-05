@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
+import { Component, ViewChild, ElementRef, HostListener, Input, OnInit } from '@angular/core';
 
 import * as _THREE from 'three';
 declare const THREE: typeof _THREE;
@@ -6,11 +6,12 @@ import "three/examples/js/controls/OrbitControls";
 
 import { MainService } from '../main.service';
 import { CameraParams, PointCloudLoader } from './PointCloud';
+import { CameraGuiService } from './camera-gui.service';
 
 @Component({
 	selector: 'pl-camera',
 	template: `
-		<canvas #canvas style="width: 100%; height: 100%;"></canvas>
+		<canvas #canvas id="canvas" style="width: 100%; height: 100%;"></canvas>
 	`,
 	styles:[`
 		:host {
@@ -20,7 +21,7 @@ import { CameraParams, PointCloudLoader } from './PointCloud';
 		}
 	`]
 })
-export class CameraComponent {
+export class CameraComponent implements OnInit {
 
 	@Input() data: number[][];
 
@@ -33,7 +34,10 @@ export class CameraComponent {
 	@ViewChild('canvas', { read: ElementRef })
 	private canvasRef: ElementRef;
 
-	constructor(private mainService: MainService) {
+	constructor(
+		private mainService: MainService,
+		private cameraGuiService: CameraGuiService
+	) {
 		this.mainService.points.subscribe(data => {
 			this.data = data;
 			if (this.data && this.data.length > 0) {
@@ -42,20 +46,21 @@ export class CameraComponent {
 		});
 	}
 
+	ngOnInit() {
+		this.createScene();
+		this.createLight();
+		this.initRenderer();
+		this.cameraGuiService.buildGui();
+	}
+
 	/* LIFECYCLE */
 	update() {
-		if (!this.scene) {
-			this.createScene();
-			this.createLight();
-		}
-		if (!this.renderer) {
-			this.initRenderer();
-		}
 		if(this.data && this.data.length > 0) {
 			let cameraParams = PointCloudLoader.calculate(this.data);
 			this.createCamera(this.data, cameraParams);
 			this.loadPoints(this.data);
 			this.addControls(cameraParams);
+			this.render(this.scene, this.camera);
 		}
 	}
 
@@ -125,42 +130,28 @@ export class CameraComponent {
             this.scene.remove(this.scene.children[0]);
         }
         this.controls.removeEventListener('change', this.onControlChangeEvent);
-        window.removeEventListener('resize', this.onWindowResizeEvent)
 	}
 	
 	private onControlChangeEvent = (event) => {
         this.render(this.scene, this.camera);
     };
 
-    private onWindowResizeEvent = (event) => {
-        this.onWindowResize(this.camera);
-	}
-
-	private onWindowResize(camera) {
-        let width = this.canvas.clientWidth;
-        let height = this.canvas.clientHeight;
-        if (height*2 > width) {
-            height = width/2;
-        } else if (width/2 > height) {
-            width = height*2;
-        }
-        camera.aspect = width/height;
-        camera.updateProjectionMatrix();
-        this.renderer.setSize(width, height);
-    }
-
 	/* EVENTS */
 
 	@HostListener('window:resize', ['$event'])
 	public onResize(event: Event) {
-		// this.canvas.style.width = "100%";
-		// this.canvas.style.height = "100%";
-		// console.log("onResize: " + this.canvas.clientWidth + ", " + this.canvas.clientHeight);
+		this.canvas.style.width = "100%";
+		this.canvas.style.height = "100%";
+		console.log("onResize: " + this.canvas.clientWidth + ", " + this.canvas.clientHeight);
 
-		// this.camera.aspect = this.getAspectRatio();
-		// this.camera.updateProjectionMatrix();
-		// this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
-		// this.render();
+		if (this.camera) {
+			this.camera.aspect = this.canvas.clientWidth/this.canvas.clientHeight;
+			this.camera.updateProjectionMatrix();
+			this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+			this.render(this.scene, this.camera);
+		} else {
+			console.log('Camera has been defined.');
+		}
 	}
 
 	@HostListener('document:keypress', ['$event'])

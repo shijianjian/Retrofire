@@ -1,5 +1,3 @@
-import * as nj from 'numjs';
-
 declare const THREE;
 
 export interface CameraParams {
@@ -96,12 +94,15 @@ export class PointCloudLoader extends ThreeDLoader {
         }
     }
 
-    static getPointsGeometry(pointcloud: number[][]): THREE.Geometry {
+    static getPointsGeometry(pointcloud: number[][], defaultColor?: THREE.Color): THREE.Geometry {
+        if (!defaultColor) {
+            defaultColor = new THREE.Color(1, 0.5, 0)
+        }
         let geometry: THREE.Geometry = new THREE.Geometry();
         let colors: THREE.Color[] = [];
         for(let i=0; i<pointcloud.length; i++) {
-            // Hard code color
-            colors.push(new THREE.Color(1, 0.5, 0));
+            // TODO: Use native colors
+            colors.push(defaultColor);
             geometry.vertices.push(new THREE.Vector3(
                 pointcloud[i][0],
                 pointcloud[i][1],

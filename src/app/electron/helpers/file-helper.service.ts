@@ -35,7 +35,7 @@ export class FileHelperService {
         let fileLoader = PTSLoader.getLoader;
         fileLoader.read(filepath).then(
             res => {
-                console.log(res)
+                console.log(res.length)
                 this.mainService.points.next(res);
             },
             rej => {

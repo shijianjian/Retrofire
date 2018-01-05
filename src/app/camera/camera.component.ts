@@ -1,5 +1,4 @@
 import { Component, ViewChild, ElementRef, HostListener, Input, OnInit, OnDestroy } from '@angular/core';
-import { PointsMaterial } from 'three';
 import * as _THREE from 'three';
 declare const THREE: typeof _THREE;
 import "three/examples/js/controls/OrbitControls";
@@ -8,12 +7,19 @@ import { MainService } from '../main.service';
 import { CameraParams, PointCloudLoader } from './PointCloud';
 import { CameraGuiService, PointControls, SceneControls, SceneGuiControls } from './camera-gui.service';
 import { PointerMode } from '../model/pointer.mode';
+import { BoundingBox } from './scene-selection.directive';
 
 
 @Component({
 	selector: 'pl-camera',
 	template: `
-		<canvas #canvas id="canvas" style="width: 100%; height: 100%;" plSceneSelection></canvas>
+		<canvas 
+			#canvas 
+			id="canvas" 
+			style="width: 100%; height: 100%;" 
+			plSceneSelection
+			(boundingBox)="onBoundingBox($event)"
+		></canvas>
 	`,
 	styles:[`
 		:host {
@@ -63,11 +69,11 @@ export class CameraComponent implements OnInit, OnDestroy {
 		this.cameraGuiService.pointControls.subscribe(ctrls => {
 			if (this.figure) {
 				ctrls.control === PointControls.SIZE ? 
-					(<PointsMaterial>this.figure.material).size = ctrls.parameters.size : null;
+					(<THREE.PointsMaterial>this.figure.material).size = ctrls.parameters.size : null;
 				ctrls.control === PointControls.OPACITY ? 
-					(<PointsMaterial>this.figure.material).opacity = ctrls.parameters.opacity : null;
+					(<THREE.PointsMaterial>this.figure.material).opacity = ctrls.parameters.opacity : null;
 				ctrls.control === PointControls.COLOUR ? 
-					(<PointsMaterial>this.figure.material).color = new THREE.Color(ctrls.parameters.colour) : null;
+					(<THREE.PointsMaterial>this.figure.material).color = new THREE.Color(ctrls.parameters.colour) : null;
 				
 				this.render();
 			}	
@@ -192,7 +198,45 @@ export class CameraComponent implements OnInit, OnDestroy {
 	
 	private onControlChangeEvent = (event) => {
         this.render();
-    };
+	};
+	
+
+	// Select Points
+	private onBoundingBox(event: BoundingBox) {
+		this.figure.updateMatrix();
+		
+		let vector: THREE.Vector3;
+		let selected = (<THREE.Geometry>this.figure.geometry).vertices.filter((value) => {
+			vector = value.clone();
+			vector.applyMatrix4(this.figure.matrixWorld);
+			let position = this.toScreenXY(vector);
+			return this.pointInsideBBOX(position, event);
+		});
+		console.log(selected.length)
+	}
+
+	private toScreenXY (position: THREE.Vector3) {
+
+		let pos = position.clone();
+		let projScreenMat = new THREE.Matrix4();
+		projScreenMat.multiplyMatrices( this.camera.projectionMatrix, this.camera.matrixWorldInverse );
+		pos.applyMatrix4(projScreenMat);
+  
+		return new THREE.Vector3(
+			( pos.x + 1 ) * this.canvas.clientWidth/ 2 + this.canvas.offsetLeft,
+			( - pos.y + 1) * this.canvas.clientHeight/ 2 + this.canvas.offsetTop
+		);
+	  }
+
+	private pointInsideBBOX(point: THREE.Vector3, box: BoundingBox) {
+		
+		if (point.x >= box.left && point.x<=box.right 
+			&& point.y>=box.top && point.y<=box.bottom
+		) {
+			return true;
+		}
+		return false;
+	}
 
 	/* EVENTS */
 

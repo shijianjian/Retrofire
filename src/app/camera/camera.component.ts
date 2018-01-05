@@ -13,7 +13,7 @@ import { PointerMode } from '../model/pointer.mode';
 @Component({
 	selector: 'pl-camera',
 	template: `
-		<canvas #canvas id="canvas" style="width: 100%; height: 100%;"></canvas>
+		<canvas #canvas id="canvas" style="width: 100%; height: 100%;" plSceneSelection></canvas>
 	`,
 	styles:[`
 		:host {
@@ -46,6 +46,7 @@ export class CameraComponent implements OnInit, OnDestroy {
 			this.data = data;
 			if (this.data && this.data.length > 0) {
 				this.update();
+				this.mainService.setPointerMode(PointerMode.POINT);
 			}
 		});
 		this.mainService.getPointerMode().subscribe(mode => {
@@ -207,12 +208,16 @@ export class CameraComponent implements OnInit, OnDestroy {
 			this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
 			this.render();
 		} else {
-			console.log('Camera has been defined.');
+			console.log('Camera has not been defined.');
 		}
 	}
 
-	@HostListener('document:keypress', ['$event'])
+	@HostListener('document:keydown', ['$event'])
 	public onKeyPress(event: KeyboardEvent) {
+		event.stopPropagation();
 		console.log("onKeyPress: " + event.key);
+		if (event.keyCode === 27) { // on Press Escape
+			this.mainService.setPointerMode(PointerMode.POINT);
+		}
 	}
 }

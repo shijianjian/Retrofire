@@ -14,13 +14,26 @@ export class MainService {
     setPointerMode(mode: PointerMode) {
         if (this.mode.getValue() !== mode) {
             this.mode.next(mode);
+            this.updatePointerByMode(mode);
         } else {
             this.mode.next(PointerMode.POINT);
+            this.updatePointerByMode(PointerMode.POINT);
         }
     }
 
     getPointerMode() {
         return this.mode;
+    }
+
+    private updatePointerByMode(mode: PointerMode) {
+        let canvas = document.getElementById("canvas");
+        if (mode === PointerMode.POINT) {
+            canvas.style.cursor = 'default';
+        } else if (mode === PointerMode.CROP) {
+            canvas.style.cursor = 'crosshair';
+        } else {
+            throw new TypeError(`Mode '${mode}' not found.`);
+        }
     }
 
     // globle shared gui settings

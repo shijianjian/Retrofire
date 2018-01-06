@@ -1,4 +1,5 @@
 export enum PointerMode {
     POINT,
-    CROP
+    CROP,
+    RESIZE
 }

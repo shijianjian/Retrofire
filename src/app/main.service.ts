@@ -27,7 +27,9 @@ export class MainService {
 
     private updatePointerByMode(mode: PointerMode) {
         let canvas = document.getElementById("canvas");
-        if (mode === PointerMode.POINT) {
+        if (mode === PointerMode.POINT
+            || mode === PointerMode.RESIZE
+        ) {
             canvas.style.cursor = 'default';
         } else if (mode === PointerMode.CROP) {
             canvas.style.cursor = 'crosshair';

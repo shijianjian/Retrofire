@@ -46,12 +46,40 @@ export class SceneSelectionDirective {
         endY: undefined,
     }
 
+    /**
+     * Cancel the next operation.
+     * Remove everything if set force to true.
+     * @param force boolean
+     */
+    onCancel(force: boolean) {
+        if (force) {
+            this.selectionToggle(false);
+            this.destroySelectArea();
+            return;
+        }
+        if (this.start) {
+            this.selectionToggle(false);
+        } else if (typeof this.componentRef !== 'undefined') {
+            this.destroySelectArea();
+        }
+    }
+
     private initSelectArea() {
+        if (typeof this.componentRef !== 'undefined') {
+            this.destroySelectArea();
+        }
         this.componentRef = this.componentFactoryResolver
             .resolveComponentFactory(BoundingBoxComponent).create(this.injector);
         this.appRef.attachView(this.componentRef.hostView);
         this.selectedDiv = (this.componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
         
+        this.componentRef.instance.area.subscribe( (data: SelectedArea) => {
+            this.selectedArea = data;
+            this.mainService.setPointerMode(PointerMode.POINT);
+            this.emit();
+            this.destroySelectArea();
+        });
+
         this.selectedDiv.style.position = 'absolute';
         this.selectedDiv.style.opacity = '50%';
         this.selectedDiv.style.background = 'rgba(252, 81, 91, 0.1)';
@@ -70,7 +98,6 @@ export class SceneSelectionDirective {
             this.initSelectArea();
         } else {
             this.start = false;
-            // this.destroySelectArea();
         }
     }
 
@@ -92,14 +119,15 @@ export class SceneSelectionDirective {
         }
     }
 
-    @HostListener('mouseup', ['$event'])
+    @HostListener('document:mouseup', ['$event'])
 	public onMouseUp(event: MouseEvent) {
         if (this.mainService.getPointerMode().getValue() === PointerMode.CROP) {
             this.selectionToggle(false);
             this.selectedArea.endX = event.clientX;
             this.selectedArea.endY = event.clientY;
-            // this.emit();
-            console.log(this.selectedArea)
+            console.log("2222");
+            console.log(this.selectedArea);
+            this.componentRef.instance.initSettings();
             this.mainService.setPointerMode(PointerMode.RESIZE);
         }
     }

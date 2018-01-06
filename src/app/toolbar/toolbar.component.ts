@@ -15,10 +15,6 @@ import { PointerMode } from '../model/pointer.mode';
     mat-toolbar {
         border-radius: 0 0 1em 1em;
     }
-    mat-icon:hover {
-        cursor: pointer;
-        opacity: 0.85;
-    }
   `]
 })
 export class ToolbarComponent{

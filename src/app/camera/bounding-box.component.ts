@@ -1,4 +1,4 @@
-import { Component, HostListener, ElementRef } from "@angular/core";
+import { Component, HostListener, ElementRef, Output, EventEmitter, Input } from "@angular/core";
 import { SelectedArea } from "./scene-selection.directive";
 import { MainService } from "../main.service";
 import { PointerMode } from "../model/pointer.mode";
@@ -25,13 +25,17 @@ import { PointerMode } from "../model/pointer.mode";
         .bounding-box-movable-ew:hover {
             cursor: ew-resize;
         }
+        mat-toolbar-row {
+            display: flex;
+            flex-direction: row-reverse;
+        }
         .bbox-toolbar {
             position: absolute;
             bottom: 0;
             right: 0;
             height: 2em;
-            width: 70%;
-            min-width: 200px;
+            width: 40%;
+            min-width: 100px;
             min-height: unset;
             margin-bottom: -2em;
             margin-right: -1px;
@@ -41,7 +45,10 @@ import { PointerMode } from "../model/pointer.mode";
 })
 export class BoundingBoxComponent {
 
-    private start = false;
+    @Input() start = true;
+    @Output() area: EventEmitter<SelectedArea> = new EventEmitter<SelectedArea>();
+    @Output() cancel: EventEmitter<boolean> = new EventEmitter<boolean>();
+
     private selectedDiv: HTMLDivElement;
     private selectedArea: SelectedArea;
     private resizingMode: string;
@@ -59,28 +66,39 @@ export class BoundingBoxComponent {
         this.resizingMode = event;
     }
 
+    onConfirm(event: Event) {
+        event.stopPropagation();
+        this.area.emit(this.selectedArea);
+    }
+
+    onClear(event: Event) {
+        event.stopPropagation();
+        this.cancel.emit(true);
+    }
+
+    initSettings() {
+        this.start = false;
+        this.selectedDiv = this.elRef.nativeElement;
+        this.selectedArea = {
+            startX: this.selectedDiv.offsetLeft,
+            startY: this.selectedDiv.offsetTop,
+            endX: this.selectedDiv.offsetLeft + this.selectedDiv.offsetWidth,
+            endY: this.selectedDiv.offsetTop + this.selectedDiv.offsetHeight
+        };
+    }
+
     @HostListener('mousedown', ['$event'])
 	public onMouseDown(event: MouseEvent) {
-        event.stopPropagation();
         if (this.mainService.getPointerMode().getValue() === PointerMode.RESIZE) {
             this.start = true;
-            this.selectedDiv = this.elRef.nativeElement;
-            this.selectedArea = {
-                startX: this.selectedDiv.offsetLeft,
-                startY: this.selectedDiv.offsetTop,
-                endX: this.selectedDiv.offsetLeft + this.selectedDiv.offsetWidth,
-                endY: this.selectedDiv.offsetTop + this.selectedDiv.offsetHeight
-            };
             let dist_x = event.clientX - this.selectedDiv.offsetLeft;
             let dist_y = event.clientY - this.selectedDiv.offsetTop;
             this.mousePositionInBBox = {x: dist_x, y: dist_y};
-            console.log(this.selectedArea)
         }
     }
 
-    @HostListener('window:mousemove', ['$event'])
+    @HostListener('document:mousemove', ['$event'])
 	public onMouseMove(event: MouseEvent) {
-        event.stopPropagation();
         if (this.mainService.getPointerMode().getValue() === PointerMode.RESIZE
             && this.selectedArea
             && this.start
@@ -93,14 +111,11 @@ export class BoundingBoxComponent {
 
     @HostListener('document:mouseup', ['$event'])
 	public onMouseUp(event: MouseEvent) {
-        event.stopPropagation();
         if (this.mainService.getPointerMode().getValue() === PointerMode.RESIZE
             && this.selectedArea
         ) {
             this.start = false;
-            this.selectedArea.endX = event.clientX;
-            this.selectedArea.endY = event.clientY;
-            console.log(this.selectedArea);
+            console.log("11111");
         }
     }
 
@@ -132,9 +147,11 @@ export class BoundingBoxComponent {
         if (Y > this.selectedArea.endY) {
             this.selectedDiv.style.top = `${this.selectedArea.endY}px`
             this.selectedDiv.style.height = `${Y - this.selectedArea.endY}px`;
+            this.selectedArea.endY = Y;
         } else {
             this.selectedDiv.style.top = `${Y}px`;
             this.selectedDiv.style.height = `${this.selectedArea.endY - Y}px`;
+            this.selectedArea.startY = Y;
         }
     }
 
@@ -142,9 +159,11 @@ export class BoundingBoxComponent {
         if (X > this.selectedArea.endX) {
             this.selectedDiv.style.left = `${this.selectedArea.endX}px`;
             this.selectedDiv.style.width = `${X - this.selectedArea.endX}px`;
+            this.selectedArea.endX = X;
         } else {
             this.selectedDiv.style.left = `${X}px`;
             this.selectedDiv.style.width = `${this.selectedArea.endX - X}px`;
+            this.selectedArea.startX = X;
         }
     }
 
@@ -152,9 +171,11 @@ export class BoundingBoxComponent {
         if (Y > this.selectedArea.startY) {
             this.selectedDiv.style.top = `${this.selectedArea.startY}px`;
             this.selectedDiv.style.height = `${Y - this.selectedArea.startY}px`;
+            this.selectedArea.endY = Y;
         } else {
             this.selectedDiv.style.top = `${Y}px`;
             this.selectedDiv.style.height = `${this.selectedArea.startY - Y}px`;
+            this.selectedArea.startY = Y;
         }
     }
 
@@ -162,9 +183,11 @@ export class BoundingBoxComponent {
         if (X > this.selectedArea.startX) {
             this.selectedDiv.style.left = `${this.selectedArea.startX}px`;
             this.selectedDiv.style.width = `${X - this.selectedArea.startX}px`;
+            this.selectedArea.endX = X;
         } else {
             this.selectedDiv.style.left = `${X}px`;
             this.selectedDiv.style.width = `${this.selectedArea.startX - X}px`;
+            this.selectedArea.startX = X;
         }
     }
 

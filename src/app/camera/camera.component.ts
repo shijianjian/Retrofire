@@ -226,7 +226,7 @@ export class CameraComponent implements OnInit, OnDestroy {
 			( pos.x + 1 ) * this.canvas.clientWidth/ 2 + this.canvas.offsetLeft,
 			( - pos.y + 1) * this.canvas.clientHeight/ 2 + this.canvas.offsetTop
 		);
-	  }
+	}
 
 	private pointInsideBBOX(point: THREE.Vector3, box: BoundingBox) {
 		
@@ -253,15 +253,6 @@ export class CameraComponent implements OnInit, OnDestroy {
 			this.render();
 		} else {
 			console.log('Camera has not been defined.');
-		}
-	}
-
-	@HostListener('document:keydown', ['$event'])
-	public onKeyPress(event: KeyboardEvent) {
-		event.stopPropagation();
-		console.log("onKeyPress: " + event.key);
-		if (event.keyCode === 27) { // on Press Escape
-			this.mainService.setPointerMode(PointerMode.POINT);
 		}
 	}
 }

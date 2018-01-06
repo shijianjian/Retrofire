@@ -6,24 +6,30 @@
 </div>
 
 <!-- mid -->
-<div style="width: 90%; display:flex; flex-direction:column; width: 96%; height:100%;">
+<div style="display:flex; flex-direction:column; width: 96%; height:106%; margin-top:-2%;">
     <!-- top -->
-    <div class="bounding-box-movable-ns" (mousedown)="onMove('n')" style="height:5%; margin-top:-3%;"></div>
+    <div class="bounding-box-movable-ns" (mousedown)="onMove('n')" style="height:5%;"></div>
     <!-- main -->
-    <div class="bounding-box-movable" (mousedown)="onMove('center')" style="height:96%"></div>
+    <div class="bounding-box-movable" (mousedown)="onMove('center')" style="height:90%"></div>
     <!-- bottom -->
-    <div class="bounding-box-movable-ns" (mousedown)="onMove('s')" style="height:5%; margin-bottom:-3%;"></div>
+    <div class="bounding-box-movable-ns" (mousedown)="onMove('s')" style="height:5%;"></div>
 </div>
 
 <!-- right -->
-<div style="display:flex; flex-direction:column; width: 5%; height:100%; margin-right: -3%;">
+<div style="display:flex; flex-direction:column; width: 5%; margin-right: -3%;">
     <div class="bounding-box-movable-nesw" (mousedown)="onMove('ne')" style="width:100%; height:5%; margin-top:-3%;"></div>
     <div class="bounding-box-movable-ew" (mousedown)="onMove('e')" style="width: 100%; height: 96%;"></div>
     <div class="bounding-box-movable-nwse" (mousedown)="onMove('se')" style="width:100%; height:5%; margin-bottom:-3%"></div>
 </div>
 
-<mat-toolbar class="bbox-toolbar" color="primary">
+<mat-toolbar 
+    onmousedown="event.stopPropagation();" 
+    onmousemove="event.stopPropagation();" 
+    onmouseup="event.stopPropagation();" 
+    onclick="event.stopPropagation();" 
+    class="bbox-toolbar" color="primary" *ngIf="!start">
     <mat-toolbar-row>
-        <span>Custom Toolbar</span>
+        <mat-icon (click)="$event">clear</mat-icon>
+        <mat-icon (click)="onConfirm($event)">done</mat-icon>
     </mat-toolbar-row>
 </mat-toolbar>

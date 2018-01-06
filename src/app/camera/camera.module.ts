@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { MatToolbarModule } from '@angular/material';
+import { MatToolbarModule, MatIconModule } from '@angular/material';
 
 import { CameraComponent } from './camera.component';
 import { CameraService } from './camera.service';
@@ -16,6 +16,7 @@ import { BoundingBoxComponent } from './bounding-box.component';
   ],
   imports: [
     BrowserModule,
+    MatIconModule,
     MatToolbarModule
   ],
   exports: [

@@ -11,3 +11,9 @@ html, body {
     padding: 0 !important;
     margin: 0 !important;
 }
+
+
+mat-icon:hover {
+    cursor: pointer;
+    opacity: 0.85;
+}

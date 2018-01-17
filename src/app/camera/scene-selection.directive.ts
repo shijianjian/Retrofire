@@ -125,7 +125,6 @@ export class SceneSelectionDirective {
             this.selectionToggle(false);
             this.selectedArea.endX = event.clientX;
             this.selectedArea.endY = event.clientY;
-            console.log("2222");
             console.log(this.selectedArea);
             this.componentRef.instance.initSettings();
             this.mainService.setPointerMode(PointerMode.RESIZE);

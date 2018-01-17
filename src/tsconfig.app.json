@@ -5,7 +5,10 @@
     "baseUrl": "./",
     "moduleResolution": "node",
     "module": "es2015",
-    "types": []
+    "types": [],
+    "typeRoots": [
+      "node_modules/@types"
+    ]
   },
   "exclude": [
     "test.ts",

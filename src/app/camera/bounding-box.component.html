@@ -29,7 +29,7 @@
     onclick="event.stopPropagation();" 
     class="bbox-toolbar" color="primary" *ngIf="!start">
     <mat-toolbar-row>
-        <mat-icon (click)="$event">clear</mat-icon>
+        <mat-icon (click)="onClear($event)">clear</mat-icon>
         <mat-icon (click)="onConfirm($event)">done</mat-icon>
     </mat-toolbar-row>
 </mat-toolbar>

@@ -1,5 +1,5 @@
 {
-  "name": "points-lab",
+  "name": "retrofire",
   "version": "0.0.0",
   "main": "main.js",
   "scripts": {
@@ -45,7 +45,7 @@
     "@types/node": "^6.0.95",
     "@types/three": "^0.84.37",
     "codelyzer": "^4.0.1",
-    "electron": "^1.8.1",
+    "electron": "^1.8.2-beta.3",
     "electron-reload": "^1.2.2",
     "jasmine-core": "~2.6.2",
     "jasmine-spec-reporter": "~4.1.0",

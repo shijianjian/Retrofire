@@ -1,10 +1,10 @@
-const { app, Menu, BrowserWindow, ipcMain } = require('electron');
+const { app, Menu, dialog, BrowserWindow, ipcMain } = require('electron');
 
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
 
-const { buildMenu } = require('./settings/menu');
+const { buildMenu, saveFileDialog } = require('./settings/menu');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -13,7 +13,7 @@ let windowCounter = 0;
 // hot reload
 require('electron-reload')(__dirname);
 
-function createWindow() {
+function createWindow(title) {
 
 	const { screen } = require('electron')
 	const size = screen.getPrimaryDisplay().workAreaSize;
@@ -22,7 +22,7 @@ function createWindow() {
   	let win = new BrowserWindow({
         x: 0,
 		y: 0,
-		title: "Retrofire",
+		title: typeof title === 'undefined' ? "Retrofire" : title,
         width: size.width, 
 		height: size.height,
 		backgroundColor: "#000000",
@@ -34,6 +34,30 @@ function createWindow() {
 
 	win.on("focus", function() {
 		mainWindow = win;
+	});
+	win.on("close", (event) => {
+		if(win.getTitle().startsWith("*")) {
+			event.preventDefault();
+			dialog.showMessageBox(mainWindow, {
+				type: "question",
+				title: `Do you want to save the changes you made to ${win.getTitle().substring(1)}?`,
+				message: "Your changes will be lost if you don't save them.",
+				buttons: ["Save", "Cancel", "Don't save"]
+			}, (idx) => {
+				// Save
+				if (idx === 0) {
+					saveFileDialog();
+				}
+				// Cancel
+				else if (idx === 1) {
+
+				} 
+				// Don't save
+				else if (idx === 2) {
+					win.destroy();
+				}
+			})
+		}
 	});
 	windowCounter ++;
   	return win;
@@ -67,24 +91,23 @@ app.on('activate', function () {
 });
 
 ipcMain.on('add-new-tab', ()=> {
-	if (mainWindow === null) {
-		mainWindow = createWindow();
+	let win = createWindow("New Work");
+	if (mainWindow !== null) {
+		mainWindow.addTabbedWindow(win);
 	}
-	let win = createWindow();
-	mainWindow.addTabbedWindow(win);
 	mainWindow = win;
 });
 
 ipcMain.on('open-files', (filePaths) => {
 	console.log(filePaths);
 	mainWindow.webContents.send('load-file', filePaths[0]);
+	mainWindow.setTitle(filePaths[0].substring(filePaths[0].lastIndexOf("/") + 1));
 });
 
 ipcMain.on('save-file', (filename) => {
 	mainWindow.webContents.send('get-file-content');
 	// content type should be number[][]
 	ipcMain.once('get-file-content-cb', (event, content) => {
-		console.log(filename);
 		let writeStream = fs.createWriteStream(filename);
 		writeStream.on('finish', () => {
 			console.log(`${filename} created`);
@@ -98,10 +121,10 @@ ipcMain.on('save-file', (filename) => {
 
 // Create new tab for recieving partial point cloud
 ipcMain.on('send-points-to-new-window', (event, points) => {
-	let win = createWindow();
+	let win = createWindow("*Untitled");
 	win.webContents.once('did-finish-load', () => {
 		win.webContents.send('store-data', points);
 	});
 	mainWindow.addTabbedWindow(win);
 	mainWindow = win;
-})
+});

@@ -150,5 +150,7 @@ function queryIndexOfLabelOrRoleInTemplate(template, label, role) {
 }
 
 module.exports = {
-    buildMenu: createMenu
+    buildMenu: createMenu,
+    openFileDialog: openFileDialog,
+    saveFileDialog: saveFileDialog
 };

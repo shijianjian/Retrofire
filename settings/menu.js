@@ -12,6 +12,13 @@ function createMenu() {
                         openFileDialog();
                     }
                 },
+                {
+                    label: 'Save As',
+                    accelerator:'CmdOrCtrl+Shift+S',
+                    click: () => {
+                        saveFileDialog();
+                    }
+                },
                 { type: 'separator' },
                 {
                     label: "New Tab",
@@ -116,6 +123,18 @@ function openFileDialog() {
     dialog.showOpenDialog(options, (cb)=> {
         if (cb) {
             ipcMain.emit('open-files', cb);
+        }
+    });
+}
+
+function saveFileDialog() {
+    let options = {
+        title: 'Save file',
+        filters: supported_file_extensions
+    };
+    dialog.showSaveDialog(options, (filename)=> {
+        if (filename) {
+            ipcMain.emit('save-file', filename);
         }
     });
 }

@@ -20,6 +20,10 @@ export class ElectronService {
         app.ipcRenderer.on('store-data', (event, data: IPCData) => {
             this.mainService.points.next(data.points);
         });
+        app.ipcRenderer.on('get-file-content', (event) => {
+            console.log("hahaah")
+            app.ipcRenderer.send('get-file-content-cb', this.mainService.points.getValue());
+        });
     }
 
 }

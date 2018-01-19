@@ -2,6 +2,7 @@ const { app, Menu, BrowserWindow, ipcMain } = require('electron');
 
 const path = require('path');
 const url = require('url');
+const fs = require('fs');
 
 const { buildMenu } = require('./settings/menu');
 
@@ -55,6 +56,7 @@ app.on('window-all-closed', function () {
 	if (process.platform !== 'darwin') {
 		app.quit();
 	}
+	mainWindow = null;
 });
 app.on('activate', function () {
 	// On OS X it's common to re-create a window in the app when the
@@ -65,6 +67,9 @@ app.on('activate', function () {
 });
 
 ipcMain.on('add-new-tab', ()=> {
+	if (mainWindow === null) {
+		mainWindow = createWindow();
+	}
 	let win = createWindow();
 	mainWindow.addTabbedWindow(win);
 	mainWindow = win;
@@ -75,6 +80,22 @@ ipcMain.on('open-files', (filePaths) => {
 	mainWindow.webContents.send('load-file', filePaths[0]);
 });
 
+ipcMain.on('save-file', (filename) => {
+	mainWindow.webContents.send('get-file-content');
+	// content type should be number[][]
+	ipcMain.once('get-file-content-cb', (event, content) => {
+		console.log(filename);
+		let writeStream = fs.createWriteStream(filename);
+		writeStream.on('finish', () => {
+			console.log(`${filename} created`);
+		});
+		for(let point of content) {
+			writeStream.write(point.join(" ") + "\n");
+		}
+		writeStream.end();
+	});
+});
+
 // Create new tab for recieving partial point cloud
 ipcMain.on('send-points-to-new-window', (event, points) => {
 	let win = createWindow();
@@ -82,4 +103,5 @@ ipcMain.on('send-points-to-new-window', (event, points) => {
 		win.webContents.send('store-data', points);
 	});
 	mainWindow.addTabbedWindow(win);
+	mainWindow = win;
 })

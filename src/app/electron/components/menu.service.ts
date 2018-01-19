@@ -3,7 +3,8 @@ import { OpenDialogOptions } from "electron";
 
 import * as Electron from 'electron';
 import { FileHelperService } from "../helpers/file-helper.service";
-declare const app: typeof Electron.remote;
+import { IPCData, IPCEvents } from "../model/IPCEvents";
+declare const app: typeof Electron;
 declare var __process: NodeJS.Process;
 
 @Injectable()
@@ -12,16 +13,12 @@ export class MenuService {
     constructor(private fileHelperService: FileHelperService){}
     private menu: Electron.Menu;
 
-    build() {
-        this.createMenu();
-    }
-
     private openFileDialog() {
         let options: OpenDialogOptions = {
             title: 'Import a file',
             filters: this.fileHelperService.fileFilters
         };
-        app.dialog.showOpenDialog(options, (cb)=> {
+        app.remote.dialog.showOpenDialog(options, (cb)=> {
             console.log(cb);
             this.fileHelperService.readFile(cb[0]);
         });
@@ -48,7 +45,7 @@ export class MenuService {
         ]
     };
 
-    private createMenu() {
+    createMenu() {
         let template: Electron.MenuItemConstructorOptions[] = [
             this.menuItemsFile,
             {
@@ -103,7 +100,7 @@ export class MenuService {
         if (__process.platform === 'darwin') {
             template.unshift(
                 {
-                    label: app.app.getName(),
+                    label: app.remote.app.getName(),
                     submenu: [
                         {role: 'about'},
                         {type: 'separator'},
@@ -128,12 +125,12 @@ export class MenuService {
             ]
         };
 
-        const menu = app.Menu.buildFromTemplate(template);
-        app.Menu.setApplicationMenu(menu);
+        const menu = app.remote.Menu.buildFromTemplate(template);
+        app.remote.Menu.setApplicationMenu(menu);
     }
 
     public addTabWindow(): void {
-        const focusedWindow = app.BrowserWindow.getFocusedWindow();
+        const focusedWindow = app.remote.BrowserWindow.getFocusedWindow();
         if (focusedWindow) {
             focusedWindow.toggleTabBar();
             focusedWindow.addTabbedWindow(this.createWindow());
@@ -144,21 +141,23 @@ export class MenuService {
     }
 
     private createWindow(): Electron.BrowserWindow {
-        const size = app.screen.getPrimaryDisplay().workAreaSize;
+        const size = app.remote.screen.getPrimaryDisplay().workAreaSize;
         // and load the index.html of the app.
-        let win = new app.BrowserWindow({
+        let win = new app.remote.BrowserWindow({
             x: 0,
             y: 0,
             width: size.width, 
             height: size.height,
+            backgroundColor: "#000000",
             icon: `file://${__process.env.PWD}/dist/assets/logo.png`,
             tabbingIdentifier: ""
-        })
+        });
+        win.webContents.openDevTools();
         win.loadURL(`file://${__process.env.PWD}/dist/index.html`);
         // temporary work around, menu would be destoried when closing the last tab
         // rebuilt it here.
         win.on("close", () => {
-            this.build();
+            this.createMenu();
         });
         return win;
     }

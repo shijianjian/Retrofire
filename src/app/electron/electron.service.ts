@@ -1,23 +1,21 @@
-import { Injectable, OnInit } from "@angular/core";
-
-import { ipcRenderer, remote } from 'electron';
-import * as childProcess from 'child_process';
+import { Injectable } from "@angular/core";
 
 import { MenuService } from "./components/menu.service";
 
+import * as Electron from 'electron';
+declare const app: typeof Electron;
+
 @Injectable() 
 export class ElectronService {
-
-    ipcRenderer: typeof ipcRenderer;
-    childProcess: typeof childProcess;
   
     constructor(private menu: MenuService) {
 
     }
 
     buildMenu() {
-        this.menu.build();
+        this.menu.createMenu();
     }
+
     // isElectron = () => {
     //     return window && window.process && window.process.type;
     // }

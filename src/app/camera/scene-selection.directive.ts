@@ -80,6 +80,13 @@ export class SceneSelectionDirective {
             this.destroySelectArea();
         });
 
+        this.componentRef.instance.cancel.subscribe( (data: boolean) => {
+            if (data === true) {
+                this.mainService.setPointerMode(PointerMode.POINT);
+                this.destroySelectArea();
+            }
+        });
+
         this.selectedDiv.style.position = 'absolute';
         this.selectedDiv.style.opacity = '50%';
         this.selectedDiv.style.background = 'rgba(252, 81, 91, 0.1)';

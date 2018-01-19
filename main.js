@@ -1,4 +1,4 @@
-const { app, Menu, BrowserWindow } = require('electron');
+const { app, Menu, BrowserWindow, ipcMain } = require('electron');
 
 const path = require('path');
 const url = require('url');
@@ -6,10 +6,9 @@ const url = require('url');
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
-
+let windowCounter = 0;
 // hot reload
 require('electron-reload')(__dirname);
-
 
 function createWindow() {
 
@@ -17,23 +16,21 @@ function createWindow() {
 	const size = screen.getPrimaryDisplay().workAreaSize;
 
   	// and load the index.html of the app.
-  	win = new BrowserWindow({
+  	let win = new BrowserWindow({
         x: 0,
         y: 0,
         width: size.width, 
         height: size.height,
 		icon: `file://${__dirname}/dist/assets/logo.png`,
-		tabbingIdentifier: "window"
+		tabbingIdentifier: `window-${windowCounter}`
     });
     
   	win.loadURL(`file://${__dirname}/dist/index.html`);
 
-	win.on("close", function() {
-		if (win === mainWindow) {
-			mainWindow = null
-		}
+	win.on("focus", function() {
+		mainWindow = win;
 	});
-
+	windowCounter ++;
   	return win;
 }
 
@@ -51,13 +48,22 @@ app.on('window-all-closed', function () {
 	// On OS X it is common for applications and their menu bar
 	// to stay active until the user quits explicitly with Cmd + Q
 	if (process.platform !== 'darwin') {
-		app.quit()
+		app.quit();
 	}
 });
 app.on('activate', function () {
 	// On OS X it's common to re-create a window in the app when the
 	// dock icon is clicked and there are no other windows open.
 	if (mainWindow === null) {
-		mainWindow = createWindow()
+		mainWindow = createWindow();
 	}
 });
+
+
+// Create new tab for recieving partial point cloud
+ipcMain.on('send-points-to-new-window', (points) => {
+	console.log(points);
+	let win = createWindow();
+	win.webContents.emit('store-data', points);
+	mainWindow.addTabbedWindow(win);
+})

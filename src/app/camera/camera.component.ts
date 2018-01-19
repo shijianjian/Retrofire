@@ -8,6 +8,7 @@ import { CameraParams, PointCloudLoader } from './PointCloud';
 import { CameraGuiService, PointControls, SceneControls, SceneGuiControls } from './camera-gui.service';
 import { PointerMode } from '../model/pointer.mode';
 import { BoundingBox } from './scene-selection.directive';
+import { CameraService } from './camera.service';
 
 
 @Component({
@@ -46,6 +47,7 @@ export class CameraComponent implements OnInit, OnDestroy {
 	
 	constructor(
 		private mainService: MainService,
+		private cameraService: CameraService,
 		private cameraGuiService: CameraGuiService
 	) {
 		this.mainService.points.subscribe(data => {
@@ -212,6 +214,7 @@ export class CameraComponent implements OnInit, OnDestroy {
 			let position = this.toScreenXY(vector);
 			return this.pointInsideBBOX(position, event);
 		});
+		this.cameraService.sendToNewWindow(selected);
 		console.log(selected.length)
 	}
 

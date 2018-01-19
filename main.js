@@ -20,7 +20,8 @@ function createWindow() {
   	// and load the index.html of the app.
   	let win = new BrowserWindow({
         x: 0,
-        y: 0,
+		y: 0,
+		title: "Retrofire",
         width: size.width, 
 		height: size.height,
 		backgroundColor: "#000000",
@@ -45,7 +46,7 @@ app.on('ready', function() {
 	buildMenu();
 });
 app.on('new-window-for-tab', function () {
-  	createWindow();
+  	mainWindow = createWindow();
 });
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
@@ -66,17 +67,19 @@ app.on('activate', function () {
 ipcMain.on('add-new-tab', ()=> {
 	let win = createWindow();
 	mainWindow.addTabbedWindow(win);
+	mainWindow = win;
 });
 
 ipcMain.on('open-files', (filePaths) => {
-	console.log(typeof filePaths);
+	console.log(filePaths);
 	mainWindow.webContents.send('load-file', filePaths[0]);
 });
 
-
 // Create new tab for recieving partial point cloud
-ipcMain.on('send-points-to-new-window', (points) => {
+ipcMain.on('send-points-to-new-window', (event, points) => {
 	let win = createWindow();
-	win.webContents.send('store-data', points);
+	win.webContents.once('did-finish-load', () => {
+		win.webContents.send('store-data', points);
+	});
 	mainWindow.addTabbedWindow(win);
 })

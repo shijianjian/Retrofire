@@ -5,7 +5,6 @@ import { PointerMode } from "./model/pointer.mode";
 
 let dat: typeof _dat = require('dat.gui/build/dat.gui.js');
 import * as Electron from 'electron';
-import { IPCData } from "./electron/model/IPCEvents";
 declare const app: typeof Electron;
 
 @Injectable()
@@ -13,10 +12,6 @@ export class MainService {
 
     points: BehaviorSubject<number[][]> = new BehaviorSubject<number[][]>([]);
     private mode: BehaviorSubject<PointerMode> = new BehaviorSubject<PointerMode>(PointerMode.POINT);
-
-    constructor() {
-        this.initListeners();
-    }
 
     setPointerMode(mode: PointerMode) {
         if (this.mode.getValue() !== mode) {
@@ -63,12 +58,5 @@ export class MainService {
 
     ngOnDestroy() {
         app.remote.getCurrentWindow().webContents.removeAllListeners();
-    }
-
-    initListeners() {
-        app.ipcRenderer.on('store-data', (data: IPCData) => {
-            console.log("heiehieheiehei");
-            this.points.next(data.points);
-        });
     }
 }

@@ -4,5 +4,5 @@ export enum IPCEvents {
 }
 
 export interface IPCData {
-    points?;
+    points?: number[][];
 }

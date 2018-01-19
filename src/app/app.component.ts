@@ -20,7 +20,7 @@ export class AppComponent{
     private electronService: ElectronService,
     private mainService: MainService
   ) {
-		this.electronService.buildMenu();
+		
   }
   
 

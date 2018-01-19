@@ -114,7 +114,9 @@ function openFileDialog() {
         filters: supported_file_extensions
     };
     dialog.showOpenDialog(options, (cb)=> {
-        ipcMain.emit('open-files', cb);
+        if (cb) {
+            ipcMain.emit('open-files', cb);
+        }
     });
 }
 

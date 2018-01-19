@@ -3,6 +3,8 @@ const { app, Menu, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const url = require('url');
 
+const { buildMenu } = require('./settings/menu');
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
@@ -20,7 +22,8 @@ function createWindow() {
         x: 0,
         y: 0,
         width: size.width, 
-        height: size.height,
+		height: size.height,
+		backgroundColor: "#000000",
 		icon: `file://${__dirname}/dist/assets/logo.png`,
 		tabbingIdentifier: `window-${windowCounter}`
     });
@@ -38,7 +41,8 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', function() {
-  	mainWindow = createWindow();
+	mainWindow = createWindow();
+	buildMenu();
 });
 app.on('new-window-for-tab', function () {
   	createWindow();
@@ -59,11 +63,20 @@ app.on('activate', function () {
 	}
 });
 
+ipcMain.on('add-new-tab', ()=> {
+	let win = createWindow();
+	mainWindow.addTabbedWindow(win);
+});
+
+ipcMain.on('open-files', (filePaths) => {
+	console.log(typeof filePaths);
+	mainWindow.webContents.send('load-file', filePaths[0]);
+});
+
 
 // Create new tab for recieving partial point cloud
 ipcMain.on('send-points-to-new-window', (points) => {
-	console.log(points);
 	let win = createWindow();
-	win.webContents.emit('store-data', points);
+	win.webContents.send('store-data', points);
 	mainWindow.addTabbedWindow(win);
 })

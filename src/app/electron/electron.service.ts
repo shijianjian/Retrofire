@@ -13,10 +13,6 @@ export class ElectronService {
     }
 
     buildMenu() {
-        this.menu.createMenu();
+        
     }
-
-    // isElectron = () => {
-    //     return window && window.process && window.process.type;
-    // }
 }

@@ -51,7 +51,7 @@ export class CameraComponent implements OnInit, OnDestroy {
 		private cameraGuiService: CameraGuiService
 	) {
 		this.mainService.points.subscribe(data => {
-			this.data = data;
+			this.data = data.points;
 			if (this.data && this.data.length > 0) {
 				this.update();
 				this.mainService.setPointerMode(PointerMode.POINT);

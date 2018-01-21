@@ -1,12 +1,15 @@
 import { validatePoint } from './array-validator';
 import * as _fs from 'fs';
 import { StringDecoder } from 'string_decoder';
+import { FileInsider } from './file-insider';
 
 declare const fs: typeof _fs;
 
 export class PTSLoader {
 
     private static loader: PTSLoader;
+    private filename: string;
+    private extension: string;
 
     private constructor() {
 
@@ -19,8 +22,14 @@ export class PTSLoader {
         return PTSLoader.loader;
     }
 
-    read(filename): Promise<number[][]> {
-        let readStream = fs.createReadStream(filename, {
+    load(filename: string): PTSLoader {
+        this.filename = filename;
+        this.extension = filename.substring(filename.lastIndexOf(".") + 1);
+        return this;
+    }
+
+    read(): Promise<FileInsider> {
+        let readStream = fs.createReadStream(this.filename, {
             flags: 'r'
         });
 
@@ -60,7 +69,10 @@ export class PTSLoader {
                 // File is done being read
                 readStream.on('close', () => {
                     // Create a buffer of the image from the stream
-                    resolve(res);
+                    resolve((<FileInsider> {
+                        extension: this.extension,
+                        points: (<number[][]>res)
+                    }));
                 });
                 // Handle any errors while reading
                 readStream.on('error', err => {

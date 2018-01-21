@@ -11,9 +11,9 @@ export class FileHelperService {
 
     readFile(filepath: string) {
         let fileLoader = PTSLoader.getLoader;
-        fileLoader.read(filepath).then(
+        fileLoader.load(filepath).read().then(
             res => {
-                console.log(res.length)
+                console.log(res.points.length)
                 this.mainService.points.next(res);
             },
             rej => {

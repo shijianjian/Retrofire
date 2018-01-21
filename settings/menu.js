@@ -112,7 +112,7 @@ function createMenu() {
 
 let supported_file_extensions = [{
     name: 'PTS Files',
-    extensions: ['pts']
+    extensions: ['pts', 'ptx', 'xyz']
 }]
 
 function openFileDialog() {

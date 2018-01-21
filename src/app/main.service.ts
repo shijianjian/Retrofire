@@ -5,12 +5,13 @@ import { PointerMode } from "./model/pointer.mode";
 
 let dat: typeof _dat = require('dat.gui/build/dat.gui.js');
 import * as Electron from 'electron';
+import { FileInsider } from "./electron/helpers/fileLoaders/file-insider";
 declare const app: typeof Electron;
 
 @Injectable()
 export class MainService {
 
-    points: BehaviorSubject<number[][]> = new BehaviorSubject<number[][]>([]);
+    points: BehaviorSubject<FileInsider> = new BehaviorSubject<FileInsider>({extension: null, points: []});
     private mode: BehaviorSubject<PointerMode> = new BehaviorSubject<PointerMode>(PointerMode.POINT);
 
     setPointerMode(mode: PointerMode) {

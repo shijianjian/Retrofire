@@ -112,7 +112,7 @@ ipcMain.on('save-file', (filename) => {
 		writeStream.on('finish', () => {
 			console.log(`${filename} created`);
 		});
-		for(let point of content) {
+		for(let point of content.points) {
 			writeStream.write(point.join(" ") + "\n");
 		}
 		writeStream.end();

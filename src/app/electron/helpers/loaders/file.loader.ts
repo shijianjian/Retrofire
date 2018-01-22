@@ -1,13 +1,13 @@
-import { validatePoint } from './array-validator';
 import * as _fs from 'fs';
 import { StringDecoder } from 'string_decoder';
-import { FileInsider } from './file-insider';
+import { CloudLoader } from './pointcloudLoaders/pointcloud.loader';
+import { Cloud } from '../../model/pointcloud';
 
 declare const fs: typeof _fs;
 
-export class PTSLoader {
+export class FileLoader {
 
-    private static loader: PTSLoader;
+    private static loader: FileLoader;
     private filename: string;
     private extension: string;
 
@@ -16,25 +16,26 @@ export class PTSLoader {
     }
 
     static get getLoader() {
-        if(typeof PTSLoader.loader === 'undefined') {
-            PTSLoader.loader = new PTSLoader();
+        if(typeof FileLoader.loader === 'undefined') {
+            FileLoader.loader = new FileLoader();
         }
-        return PTSLoader.loader;
+        return FileLoader.loader;
     }
 
-    load(filename: string): PTSLoader {
+    load(filename: string): FileLoader {
         this.filename = filename;
         this.extension = filename.substring(filename.lastIndexOf(".") + 1);
         return this;
     }
 
-    read(): Promise<FileInsider> {
+    read(): Promise<Cloud[]> {
+
         let readStream = fs.createReadStream(this.filename, {
             flags: 'r'
         });
 
-        let res = [];
-        let arr = [];
+        let clouds: Cloud[] = [];
+        let loader = new CloudLoader(this.extension);
         let decoder = new StringDecoder('utf8');
     
         let lastLine = '';
@@ -50,16 +51,12 @@ export class PTSLoader {
             textChunk.substring(0, idx);
             let lines = textChunk.split("\n");
             lines.forEach((line) => {
-                arr = Array.from(line.split(' '));
-                arr.forEach((ele, idx, arrcb) => {
-                    arrcb[idx] = parseFloat(ele);
-                })
-                if(validatePoint(arr)) {
-                    res.push(arr);
-                } else {
-                    // Error Handling
+                let arr = line.split(" ");
+                if (arr.length === 1) {
+                    clouds.push(Object.assign({}, loader.getCloud()));
+                    loader.renewCloud();
                 }
-                line = '';
+                loader.readIn(arr);
             });
             readStream.resume();
         });
@@ -69,10 +66,7 @@ export class PTSLoader {
                 // File is done being read
                 readStream.on('close', () => {
                     // Create a buffer of the image from the stream
-                    resolve((<FileInsider> {
-                        extension: this.extension,
-                        points: (<number[][]>res)
-                    }));
+                    resolve(clouds);
                 });
                 // Handle any errors while reading
                 readStream.on('error', err => {

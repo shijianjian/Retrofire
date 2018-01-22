@@ -18,7 +18,7 @@ export class ElectronService {
             this.fileHelperService.readFile(path);
         });
         app.ipcRenderer.on('store-data', (event, data: IPCData) => {
-            this.mainService.points.next({points: data.points});
+            this.mainService.points.next(data.clouds);
         });
         app.ipcRenderer.on('get-file-content', (event) => {
             app.ipcRenderer.send('get-file-content-cb', this.mainService.points.getValue());

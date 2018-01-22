@@ -1,8 +1,8 @@
 import { Injectable } from "@angular/core";
 import { FileFilter } from "electron";
 
-import { PTSLoader } from "./fileLoaders/pts-file.loader";
 import { MainService } from "../../main.service";
+import { FileLoader } from "./loaders/file.loader";
 
 @Injectable()
 export class FileHelperService {
@@ -10,10 +10,10 @@ export class FileHelperService {
     constructor(private mainService: MainService) {}
 
     readFile(filepath: string) {
-        let fileLoader = PTSLoader.getLoader;
+        let fileLoader = FileLoader.getLoader;
         fileLoader.load(filepath).read().then(
             res => {
-                console.log(res.points.length)
+                console.log(res.length)
                 this.mainService.points.next(res);
             },
             rej => {

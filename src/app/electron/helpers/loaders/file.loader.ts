@@ -46,19 +46,16 @@ export class FileLoader {
             textChunk = lastLine + textChunk;
             let idx = textChunk.lastIndexOf("\n");
             //save the last one array for next chunk
-            lastLine = textChunk.substring(idx);
-            textChunk.substring(0, idx);
-            let lines = textChunk.split("\n");
+            lastLine = textChunk.substring(idx+2);
+            let lines = textChunk.substring(0, idx).split("\n");
             lines.forEach((line) => {
-                if (line.trim() !== "") {
-                    let arr = line.split(" ");
-                    // // normally, this row will give the number of points
-                    // if (arr.length === 1) { 
-                    //     clouds.push(Object.assign({}, loader.getCloud()));
-                    //     loader.renewCloud();
-                    // }
-                    loader.readIn(arr);
-                }
+                let arr = line.trim().split(" ");
+                // // normally, this row will give the number of points
+                // if (arr.length === 1) { 
+                //     clouds.push(Object.assign({}, loader.getCloud()));
+                //     loader.renewCloud();
+                // }
+                loader.readIn(arr);
             });
             readStream.resume();
         });

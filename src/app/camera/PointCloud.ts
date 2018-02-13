@@ -139,7 +139,11 @@ export class PointCloudLoader extends ThreeDLoader {
             if (typeof pointcloud[i].r !== 'undefined' 
                 && typeof pointcloud[i].g !== 'undefined' 
                 && typeof pointcloud[i].b !== 'undefined' ) {
-                color = new THREE.Color(pointcloud[i].r, pointcloud[i].g, pointcloud[i].b);
+                color = new THREE.Color(
+                    pointcloud[i].r/255, 
+                    pointcloud[i].g/255, 
+                    pointcloud[i].b/255
+                );
             } else {
                 color = new THREE.Color(1, 0.5, 0);
             }

@@ -59,32 +59,32 @@ export class CloudHeaderLoader extends Loader {
     }
 
     private readToPTXHeader(arr: string[]) {
-        if (!(this.header as PTXHeader).columns) {
+        if (typeof (this.header as PTXHeader).columns === 'undefined') {
             (this.header as PTXHeader).columns = this.parseToFloat(arr[0]);
-        } else if (!(this.header as PTXHeader).rows) {
-            (this.header as PTXHeader).columns = this.parseToFloat(arr[0]);
-        } else if (!(this.header as PTXHeader).scannerPosition) {
+        } else if (typeof (this.header as PTXHeader).rows === 'undefined') {
+            (this.header as PTXHeader).rows = this.parseToFloat(arr[0]);
+        } else if (typeof (this.header as PTXHeader).scannerPosition === 'undefined') {
             (this.header as PTXHeader).scannerPosition 
                     = {x: this.parseToFloat(arr[0]), y: this.parseToFloat(arr[1]), z: this.parseToFloat(arr[2])};
-        } else if (!(this.header as PTXHeader).scannerX) {
+        } else if (typeof (this.header as PTXHeader).scannerX === 'undefined') {
             (this.header as PTXHeader).scannerX 
                     = {x: this.parseToFloat(arr[0]), y: this.parseToFloat(arr[1]), z: this.parseToFloat(arr[2])};
-        } else if (!(this.header as PTXHeader).scannerY) {
+        } else if (typeof (this.header as PTXHeader).scannerY === 'undefined') {
             (this.header as PTXHeader).scannerY 
                     = {x: this.parseToFloat(arr[0]), y: this.parseToFloat(arr[1]), z: this.parseToFloat(arr[2])};
-        } else if (!(this.header as PTXHeader).scannerZ) {
+        } else if (typeof (this.header as PTXHeader).scannerZ === 'undefined') {
             (this.header as PTXHeader).scannerZ 
                     = {x: this.parseToFloat(arr[0]), y: this.parseToFloat(arr[1]), z: this.parseToFloat(arr[2])};
-        } else if (!(this.header as PTXHeader).transformationMatrix1) {
+        } else if (typeof (this.header as PTXHeader).transformationMatrix1 === 'undefined') {
             (this.header as PTXHeader).transformationMatrix1 
                     = {r1: this.parseToFloat(arr[0]), r2: this.parseToFloat(arr[1]), r3: this.parseToFloat(arr[2]), r4: this.parseToFloat(arr[3])};
-        } else if (!(this.header as PTXHeader).transformationMatrix2) {
+        } else if (typeof (this.header as PTXHeader).transformationMatrix2 === 'undefined') {
             (this.header as PTXHeader).transformationMatrix2 
                     = {r1: this.parseToFloat(arr[0]), r2: this.parseToFloat(arr[1]), r3: this.parseToFloat(arr[2]), r4: this.parseToFloat(arr[3])};  
-        } else if (!(this.header as PTXHeader).transformationMatrix3) {
+        } else if (typeof (this.header as PTXHeader).transformationMatrix3 === 'undefined') {
             (this.header as PTXHeader).transformationMatrix3
                     = {r1: this.parseToFloat(arr[0]), r2: this.parseToFloat(arr[1]), r3: this.parseToFloat(arr[2]), r4: this.parseToFloat(arr[3])};
-        } else if (!(this.header as PTXHeader).transformationMatrix4) {
+        } else if (typeof (this.header as PTXHeader).transformationMatrix4 === 'undefined') {
             (this.header as PTXHeader).transformationMatrix4
                     = {r1: this.parseToFloat(arr[0]), r2: this.parseToFloat(arr[1]), r3: this.parseToFloat(arr[2]), r4: this.parseToFloat(arr[3])};
             this.setComplete();
@@ -93,6 +93,10 @@ export class CloudHeaderLoader extends Loader {
 
     getHeader() {
         return this.header;
+    }
+
+    setCompleted(completed: boolean) {
+        this.completed = completed;
     }
 
     isCompleted() {
@@ -139,17 +143,22 @@ export class CloudLoader extends Loader {
 
     readIn(arr: string[]) {
         // set header
-        if (arr.length !== 3 && arr.length !== 7) {
+        if ((this.fileType === PointCloudFileType.XYZ 
+            || this.fileType === PointCloudFileType.PTS
+            ) && arr.length !== 1) {
+            this.headerLoader.setCompleted(true);
+        }
+        if (arr.length === 1) {
+            this.headerLoader.reset();
+        }
+        if (!this.headerLoader.isCompleted()) {
             this.newObj = true;
             this.headerLoader.readIn(arr);
         } else {
             if (this.newObj) {
                 this.cloud.createNewCloudObject();
-                this.cloud.clouds[this.cloud.clouds.length - 1].setHeader(this.headerLoader.getHeader());
+                this.cloud.clouds[this.cloud.clouds.length - 1].setHeader(Object.assign(this.headerLoader.getHeader()));
                 this.newObj = false;
-                if (this.headerLoader.isCompleted() == true) {
-                    this.headerLoader.reset();
-                }
             }
             let point: Point3D = {
                 x: this.parseToFloat(arr[0]), 

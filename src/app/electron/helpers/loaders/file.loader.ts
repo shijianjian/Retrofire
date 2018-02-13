@@ -24,7 +24,7 @@ export class FileLoader {
 
     load(filename: string): FileLoader {
         this.filename = filename;
-        this.extension = filename.substring(filename.lastIndexOf(".") + 1);
+        this.extension = filename.substring(filename.lastIndexOf(".") + 1).toUpperCase();
         return this;
     }
 
@@ -34,7 +34,6 @@ export class FileLoader {
             flags: 'r'
         });
 
-        let clouds: Cloud[] = [];
         let loader = new CloudLoader(this.extension);
         let decoder = new StringDecoder('utf8');
     
@@ -51,12 +50,15 @@ export class FileLoader {
             textChunk.substring(0, idx);
             let lines = textChunk.split("\n");
             lines.forEach((line) => {
-                let arr = line.split(" ");
-                if (arr.length === 1) {
-                    clouds.push(Object.assign({}, loader.getCloud()));
-                    loader.renewCloud();
+                if (line.trim() !== "") {
+                    let arr = line.split(" ");
+                    // // normally, this row will give the number of points
+                    // if (arr.length === 1) { 
+                    //     clouds.push(Object.assign({}, loader.getCloud()));
+                    //     loader.renewCloud();
+                    // }
+                    loader.readIn(arr);
                 }
-                loader.readIn(arr);
             });
             readStream.resume();
         });
@@ -66,7 +68,7 @@ export class FileLoader {
                 // File is done being read
                 readStream.on('close', () => {
                     // Create a buffer of the image from the stream
-                    resolve(clouds);
+                    resolve([loader.getCloud()]);
                 });
                 // Handle any errors while reading
                 readStream.on('error', err => {

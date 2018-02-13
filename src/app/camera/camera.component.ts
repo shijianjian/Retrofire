@@ -9,7 +9,7 @@ import { CameraGuiService, PointControls, SceneControls, SceneGuiControls } from
 import { PointerMode } from '../model/pointer.mode';
 import { BoundingBox } from './scene-selection.directive';
 import { CameraService } from './camera.service';
-
+import { Cloud } from '../electron/model/pointcloud';
 
 @Component({
 	selector: 'pl-camera',
@@ -32,13 +32,15 @@ import { CameraService } from './camera.service';
 })
 export class CameraComponent implements OnInit, OnDestroy {
 
-	@Input() data: number[][];
+	@Input() data: Cloud[];
 
 	renderer: THREE.WebGLRenderer;
     figure: THREE.Points;
     controls: THREE.OrbitControls;
     camera: THREE.PerspectiveCamera;
-    scene : THREE.Scene;
+	scene : THREE.Scene;
+	
+	loader = new PointCloudLoader();
 
 	@ViewChild('canvas', { read: ElementRef })
 	private canvasRef: ElementRef;
@@ -51,8 +53,10 @@ export class CameraComponent implements OnInit, OnDestroy {
 		private cameraGuiService: CameraGuiService
 	) {
 		this.mainService.points.subscribe(data => {
-			this.data = data.points;
+			this.data = data;
 			if (this.data && this.data.length > 0) {
+				PointCloudLoader.reset();
+				this.loader = new PointCloudLoader();
 				this.update();
 				this.mainService.setPointerMode(PointerMode.POINT);
 			}
@@ -112,12 +116,17 @@ export class CameraComponent implements OnInit, OnDestroy {
 	/* LIFECYCLE */
 	update() {
 		if(this.data && this.data.length > 0) {
-			let cameraParams = PointCloudLoader.calculate(this.data);
-			this.createCamera(this.data, cameraParams);
+			this.data.forEach((v, i, a) => {
+				v.clouds.forEach((v1, i1, a1) => {
+					this.loader.loadPoints(v1.getPoints());
+				});
+			})
+			let cameraParams = this.loader.cameraParam;
+			this.createCamera(cameraParams);
 			if (this.figure) {
 				this.scene.remove(this.figure);
 			}
-			this.loadPoints(this.data);
+			this.loadPoints();
 			if (this.controls) {
 				this.controls.removeEventListener('change', this.onControlChangeEvent);
 			}
@@ -131,9 +140,8 @@ export class CameraComponent implements OnInit, OnDestroy {
 		this.removeAll();
 	}
 
-	public loadPoints(data: number[][]): void {
-		let geometry = PointCloudLoader.getPointsGeometry(data);
-		let figure = PointCloudLoader.loadPoints(geometry, {
+	public loadPoints(): void {
+		let figure = this.loader.getFigure({
 			size: this.cameraGuiService.pointControls.getValue().parameters.size,
 			transparent: true, // for controlling opacity
 			vertexColors: THREE.VertexColors
@@ -158,7 +166,7 @@ export class CameraComponent implements OnInit, OnDestroy {
         this.scene.add(light);
 	}
 	
-	private createCamera(data: number[][], cameraParams: CameraParams) {
+	private createCamera(cameraParams: CameraParams) {
 		this.camera = PointCloudLoader.buildCamera(this.canvas, cameraParams);
 	}
 
@@ -218,7 +226,7 @@ export class CameraComponent implements OnInit, OnDestroy {
 		console.log(selected.length)
 	}
 
-	private toScreenXY (position: THREE.Vector3) {
+	private toScreenXY(position: THREE.Vector3) {
 
 		let pos = position.clone();
 		let projScreenMat = new THREE.Matrix4();

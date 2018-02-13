@@ -1,4 +1,6 @@
-declare const THREE;
+import * as _THREE from 'three';
+import { Point3D } from '../electron/model/pointcloud';
+declare const THREE: typeof _THREE;
 
 export interface CameraParams {
     position_x: number;
@@ -66,57 +68,99 @@ class ThreeDLoader {
 
 
 export class PointCloudLoader extends ThreeDLoader {
+
+    private static cameraParams: CameraParams;
+    private static ranges: Ranges;
+    private static total_x = 0;
+    private static total_y = 0;
+    private static total_z = 0;
+    private static numberOfPoints = 0;
+    private geometry: THREE.Geometry = new THREE.Geometry();
+    private colors: THREE.Color[] = [];
+
+    constructor() {
+        super();
+    }
+
+    static reset() {
+        PointCloudLoader.cameraParams = undefined;
+        PointCloudLoader.ranges = undefined;
+        PointCloudLoader.total_x = 0;
+        PointCloudLoader.total_y = 0;
+        PointCloudLoader.total_z = 0;
+        PointCloudLoader.numberOfPoints = 0;
+    }
     
-    static calculate(pointcloud: number[][]): CameraParams {
+    loadPoints(pointcloud: Point3D[]): void {
         if (pointcloud.length == 0) {
             throw new RangeError("Empty point cloud");
         }
         
-        let total_x: number = 0, 
-            total_y: number = 0, 
-            total_z: number = 0; // for calculating camera look at
-
+        // for calculating camera look at
         for(let i=0; i<pointcloud.length; i++) {
-            total_x += pointcloud[i][0];
-            total_y += pointcloud[i][1];
-            total_z += pointcloud[i][2];
+            PointCloudLoader.total_x += pointcloud[i].x;
+            PointCloudLoader.total_y += pointcloud[i].y;
+            PointCloudLoader.total_z += pointcloud[i].z;
         }
+
+        PointCloudLoader.numberOfPoints += pointcloud.length;
         
+        this.updateGeometry(pointcloud);
+
         let ranges = PointCloudLoader.findRanges(pointcloud);
 
-        return {
-            position_x: ranges.X_MAX + Math.abs(ranges.X_MAX),
-            position_y: ranges.Y_MAX + Math.abs(ranges.Y_MAX),
-            position_z: ranges.Z_MAX + Math.abs(ranges.Z_MAX),
-            look_x: total_x/pointcloud.length,
-            look_y: total_y/pointcloud.length,
-            look_z: total_z/pointcloud.length
+        if (PointCloudLoader.ranges) {
+            ranges.X_MAX > PointCloudLoader.ranges.X_MAX ? PointCloudLoader.ranges.X_MAX = ranges.X_MAX : null;
+            ranges.Y_MAX > PointCloudLoader.ranges.Y_MAX ? PointCloudLoader.ranges.Y_MAX = ranges.Y_MAX : null;
+            ranges.Z_MAX > PointCloudLoader.ranges.Z_MAX ? PointCloudLoader.ranges.Z_MAX = ranges.Z_MAX : null;
+            ranges.X_MIN < PointCloudLoader.ranges.X_MIN ? PointCloudLoader.ranges.X_MIN = ranges.X_MIN : null;
+            ranges.Y_MIN < PointCloudLoader.ranges.Y_MIN ? PointCloudLoader.ranges.Y_MIN = ranges.Y_MIN : null;
+            ranges.Z_MIN < PointCloudLoader.ranges.Z_MIN ? PointCloudLoader.ranges.Z_MIN = ranges.Z_MIN : null;
+        } else {
+            PointCloudLoader.ranges = ranges;
         }
     }
 
-    static getPointsGeometry(pointcloud: number[][], defaultColor?: THREE.Color): THREE.Geometry {
-        if (!defaultColor) {
-            defaultColor = new THREE.Color(1, 0.5, 0)
+    get cameraParam(): CameraParams {
+        return {
+            position_x: PointCloudLoader.ranges.X_MAX + Math.abs(PointCloudLoader.ranges.X_MAX),
+            position_y: PointCloudLoader.ranges.Y_MAX + Math.abs(PointCloudLoader.ranges.Y_MAX),
+            position_z: PointCloudLoader.ranges.Z_MAX + Math.abs(PointCloudLoader.ranges.Z_MAX),
+            look_x: PointCloudLoader.total_x/PointCloudLoader.numberOfPoints,
+            look_y: PointCloudLoader.total_y/PointCloudLoader.numberOfPoints,
+            look_z: PointCloudLoader.total_z/PointCloudLoader.numberOfPoints
         }
-        let geometry: THREE.Geometry = new THREE.Geometry();
-        let colors: THREE.Color[] = [];
+    }
+
+    private updateGeometry(pointcloud: Point3D[]): void {
+        let color;
         for(let i=0; i<pointcloud.length; i++) {
             // TODO: Use native colors
-            colors.push(defaultColor);
-            geometry.vertices.push(new THREE.Vector3(
-                pointcloud[i][0],
-                pointcloud[i][1],
-                pointcloud[i][2]
+            if (typeof pointcloud[i].r !== 'undefined' 
+                && typeof pointcloud[i].g !== 'undefined' 
+                && typeof pointcloud[i].b !== 'undefined' ) {
+                color = new THREE.Color(pointcloud[i].r, pointcloud[i].g, pointcloud[i].b);
+            } else {
+                color = new THREE.Color(1, 0.5, 0);
+            }
+            this.colors.push(color);
+            this.geometry.vertices.push(new THREE.Vector3(
+                pointcloud[i].x,
+                pointcloud[i].y,
+                pointcloud[i].z
             ));
         }
-        geometry.colors = colors;
-        return geometry;
+        this.geometry.colors = this.colors;
     }
 
-    static loadPoints(geometry: THREE.Geometry, pointsMaterialParams?: THREE.PointsMaterialParameters): THREE.Points {
+    getGeometry(): THREE.Geometry {
+        return this.geometry;
+    }
+
+    getFigure(pointsMaterialParams?: THREE.PointsMaterialParameters): THREE.Points {
         let params = pointsMaterialParams ? pointsMaterialParams : PointCloudLoader.DefaultPointsParams;
         let material = new THREE.PointsMaterial(params);
-        let figure: THREE.Points = new THREE.Points(geometry, material);
+        let figure: THREE.Points = new THREE.Points(this.geometry, material);
         return figure;
     }
 
@@ -129,22 +173,22 @@ export class PointCloudLoader extends ThreeDLoader {
         }
     }
     
-    static findRanges(pointcloud: number[][]): Ranges {
-        let x_max: number = pointcloud[0][0], 
-            x_min: number = pointcloud[0][0];
-        let y_max: number = pointcloud[0][1], 
-            y_min: number = pointcloud[0][1];
-        let z_max: number = pointcloud[0][2], 
-            z_min: number = pointcloud[0][2];
+    static findRanges(pointcloud: Point3D[]): Ranges {
+        let x_max: number = pointcloud[0].x, 
+            x_min: number = pointcloud[0].x;
+        let y_max: number = pointcloud[0].y, 
+            y_min: number = pointcloud[0].y;
+        let z_max: number = pointcloud[0].z, 
+            z_min: number = pointcloud[0].z;
 
         for(let i=0; i<pointcloud.length; i++) {
-            x_max = pointcloud[i][0] > x_max ? pointcloud[i][0] : x_max;
-            y_max = pointcloud[i][1] > y_max ? pointcloud[i][1] : y_max;
-            z_max = pointcloud[i][2] > z_max ? pointcloud[i][2] : z_max;
+            x_max = pointcloud[i].x > x_max ? pointcloud[i].x : x_max;
+            y_max = pointcloud[i].y > y_max ? pointcloud[i].y : y_max;
+            z_max = pointcloud[i].z > z_max ? pointcloud[i].z : z_max;
 
-            x_min = pointcloud[i][0] < x_min ? pointcloud[i][0] : x_min;
-            y_min = pointcloud[i][1] < y_min ? pointcloud[i][1] : y_min;
-            z_min = pointcloud[i][2] < z_min ? pointcloud[i][2] : z_min;
+            x_min = pointcloud[i].x < x_min ? pointcloud[i].x : x_min;
+            y_min = pointcloud[i].y < y_min ? pointcloud[i].y : y_min;
+            z_min = pointcloud[i].z < z_min ? pointcloud[i].z : z_min;
         }
 
         return {

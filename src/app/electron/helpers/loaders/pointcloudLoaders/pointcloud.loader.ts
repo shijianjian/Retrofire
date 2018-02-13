@@ -21,6 +21,10 @@ export class CloudHeaderLoader extends Loader {
         } else {
             this.fileType = extension;
         }
+        this.reset();
+    }
+
+    reset() {
         this.completed = false;
         this.header = this.createHeaderByFileType(this.fileType);
     }
@@ -87,6 +91,10 @@ export class CloudHeaderLoader extends Loader {
         }
     }
 
+    getHeader() {
+        return this.header;
+    }
+
     isCompleted() {
         return this.completed;
     }
@@ -117,6 +125,8 @@ export class CloudLoader extends Loader {
     private header: PointCloudHeader;
     private headerLoader: CloudHeaderLoader;
 
+    private newObj: boolean;
+
     constructor(extension: string | PointCloudFileType) {
         super();
         if (typeof extension === 'string') {
@@ -129,9 +139,18 @@ export class CloudLoader extends Loader {
 
     readIn(arr: string[]) {
         // set header
-        if (!this.headerLoader.isCompleted()) {
-            this.headerLoader.readIn(arr)
+        if (arr.length !== 3 && arr.length !== 7) {
+            this.newObj = true;
+            this.headerLoader.readIn(arr);
         } else {
+            if (this.newObj) {
+                this.cloud.createNewCloudObject();
+                this.cloud.clouds[this.cloud.clouds.length - 1].setHeader(this.headerLoader.getHeader());
+                this.newObj = false;
+                if (this.headerLoader.isCompleted() == true) {
+                    this.headerLoader.reset();
+                }
+            }
             let point: Point3D = {
                 x: this.parseToFloat(arr[0]), 
                 y: this.parseToFloat(arr[1]), 
@@ -141,6 +160,7 @@ export class CloudLoader extends Loader {
                 g: arr.length > 5 ? this.parseToFloat(arr[5]) : undefined, 
                 b: arr.length > 6 ? this.parseToFloat(arr[6]) : undefined
             };
+            this.cloud.insertPoint(point);
         }
     }
 

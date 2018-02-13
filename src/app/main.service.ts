@@ -5,7 +5,7 @@ import { PointerMode } from "./model/pointer.mode";
 
 let dat: typeof _dat = require('dat.gui/build/dat.gui.js');
 import * as Electron from 'electron';
-import { Cloud } from "./electron/helpers/loaders/pointcloudLoaders/pointcloud";
+import { Cloud } from "./electron/model/pointcloud";
 declare const app: typeof Electron;
 
 @Injectable()

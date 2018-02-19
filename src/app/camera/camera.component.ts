@@ -212,7 +212,7 @@ export class CameraComponent implements OnInit, OnDestroy {
 	
 
 	// Select Points
-	private onBoundingBox(event: BoundingBox) {
+	public onBoundingBox(event: BoundingBox) {
 		this.figure.updateMatrix();
 		
 		let vector: THREE.Vector3;
